@@ -17,7 +17,7 @@ def bias_variable(shape,name='bias'):
 def conv_layer(bottom,Weights,bias=None,name='conv_layer'):
     with tf.name_scope(name):
         conv_w = weight_variable(Weights,name=name+'/weight')# [cols,rows,channels,n]
-        conv = tf.nn.conv2d(bottom,conv_w,strides=[1,1,1,1], padding='VALID')
+        conv = tf.nn.conv2d(bottom,conv_w,strides=[1,1,1,1], padding='SAME')
         tf.histogram_summary(name+'/conv',conv)
         if bias==None:
             return conv
@@ -40,3 +40,17 @@ def fully_connected(bottom,Weights,name='fc'):
 def softmax_layer(bottom,name='softmax'):
     with tf.name_scope(name):
         return tf.nn.softmax(bottom)
+        
+def upsampling_layer(bottom,new_height=100,new_width=100,name='upsampling'):
+    with tf.name_scope(name):
+        return tf.image.resize_images(bottom, new_height, new_width)
+        
+def deconv_layer(bottom,shape,Weights,bias=None,name='deconv_layer'):
+    with tf.name_scope(name):
+        deconv_w = weight_variable(Weights,name=name+'/weight')# [cols,rows,channels,n]
+        deconv = tf.nn.conv2d_transpose(bottom,deconv_w,shape,strides=[1,1,1,1])
+        if bias==None:
+            return deconv
+        else:
+            b = bias_variable(bias,name=name+'/bias')
+            return deconv + b
