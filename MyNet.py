@@ -18,7 +18,7 @@ def conv_layer(bottom,Weights,bias=None,name='conv_layer'):
     with tf.name_scope(name):
         conv_w = weight_variable(Weights,name=name+'/weight')# [cols,rows,channels,n]
         conv = tf.nn.conv2d(bottom,conv_w,strides=[1,1,1,1], padding='SAME')
-        tf.histogram_summary(name+'/conv',conv)
+        #tf.histogram_summary(name+'/conv',conv)
         if bias==None:
             return conv
         else:

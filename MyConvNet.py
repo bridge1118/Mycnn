@@ -2,25 +2,17 @@ import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 from MyNet import weight_variable,bias_variable,conv_layer,pooling_layer,relu_layer,fully_connected,softmax_layer
 from MyNet import upsampling_layer,deconv_layer
-from Readim import readims
+from Readim import MyImages
 
-'''
-def compute_accuracy(v_xs,v_ys):
-    global prediction
-    y_pre = sess.run(prediction,feed_dict={xs:v_xs})
-    correct_prediction = tf.equal(tf.argmax(y_pre,1),tf.argmax(v_ys,1))
-    acc = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
-    result = sess.run(acc,feed_dict={xs:v_xs,ys:v_ys})
-    return result
-'''
-batch_size=5
-h=512
-w=512
+import numpy as np
+from scipy import misc
+
+batch_size=1
+h=500
+w=500
 c=1
 xs = tf.placeholder(tf.float32,[batch_size,h,w,c],name='xs')
 ys = tf.placeholder(tf.float32,[batch_size,h,w,c],name='ys')
-xs=tf.image.resize_images(xs,500,500)
-ys=tf.image.resize_images(ys,500,500)
 
 ########## LAYER DEFINITION START ##########
 # layer 1
@@ -48,38 +40,48 @@ relu4_reshape = tf.reshape(relu4,[-1,1])
 #deconv4 = deconv_layer(relu4, [batch_size,h,w,c], [5,5,1,1], [1], name='deconv4')
 #relu4 = relu_layer(deconv4, name='relu4')
 
-# layer 5 (prediction)
-prediction = softmax_layer(relu4_reshape)
-
+# layer 5 (entropy)
 # training solver
 with tf.name_scope('loss'):
     ys_reshape = tf.reshape(ys,[-1,1])
-    #loss=ys_reshape*tf.log(prediction)
+    prediction = tf.reshape(relu4,[-1,1])
+
+    cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(prediction,ys_reshape)
+    
+    '''
     cross_entropy = tf.reduce_mean(-tf.reduce_sum(ys_reshape*tf.log(prediction),
                                               reduction_indices=[1]))
     tf.scalar_summary('loss',cross_entropy)
+    '''
 with tf.name_scope('solver'):
-    train_step = tf.train.GradientDescentOptimizer(0.1).minimize(cross_entropy)
+    train_step = tf.train.AdamOptimizer(1e-6).minimize(cross_entropy)
 ########## LAYER DEFINITION END ##########
 
 
 # start training
 # read images and labels
-#label = readims('/Users/ful6ru04/Documents/TensorFlow workspace/Mycnn/SPINE_data/label')
-#image = readims('/Users/ful6ru04/Documents/TensorFlow workspace/Mycnn/SPINE_data/train')
+imdir='/Users/ful6ru04/Documents/TensorFlow workspace/Mycnn/SPINE_data'
+myImages = MyImages()
+myImages.build(imdir,batch_size,'png')
+
 sess = tf.Session()
-merged = tf.merge_all_summaries()
+#merged = tf.merge_all_summaries()
 writer = tf.train.SummaryWriter("logs/", sess.graph)
 sess.run(tf.initialize_all_variables())
-'''
-for step in range(500):
-    batch_xs, batch_ys = mnist.train.next_batch(100)
-    sess.run(train_step,feed_dict={xs:batch_xs, ys:batch_ys})
-    if step % 50 == 0:
-        print( str(step)+': '+str(compute_accuracy(mnist.test.images, mnist.test.labels)) )
-        results = sess.run(merged,feed_dict={xs:batch_xs, ys:batch_ys})
-        writer.add_summary(results,step)
-'''
+
+for step in range(15):
+    batch_xs, batch_ys = myImages.nextBatch()
+    
+    #print( sess.run(sum1,feed_dict={xs:batch_xs, ys:batch_ys}) )
+    
+    result=sess.run(train_step,feed_dict={xs:batch_xs, ys:batch_ys})
+    print(result)
+    if step % 1 == 0:
+        #print( str(step)+': '+str(compute_accuracy(mnist.test.images, mnist.test.labels)) )
+        print('step '+str(step))
+        #results = sess.run(merged,feed_dict={xs:batch_xs, ys:batch_ys})
+        #writer.add_summary(results,step)
+
 sess.close()
 
 
