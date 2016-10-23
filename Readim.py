@@ -26,19 +26,18 @@ class MyImages:
         self.batch_size = batch_size
         
     def readims(self,path):
-        #pattern = os.path.join(path, "*.png")
-        #c = skimage.io.ImageCollection(glob(pattern))
         c = skimage.io.ImageCollection(glob(path))
         all_images = c.concatenate()
         
         if all_images.ndim == 3:
             all_images = all_images[:,:,:,np.newaxis]
-        all_images.astype(float)
+        all_images = np.uint8(all_images)
         return all_images
         
     def label_parsing(self,images):
         images[np.nonzero(images)] = 1
         return images
+        
     def nextBatch(self):
         size = self.train_imgs.shape[0]
         batch_images = None
@@ -47,11 +46,11 @@ class MyImages:
             batch_images = self.train_imgs[self.start:self.end,:,:,:]
             batch_labels = self.label_imgs[self.start:self.end,:,:,:]
         else:
-            tmp1 = self.train_imgs[self.start:size-1,:,:,:]
+            tmp1 = self.train_imgs[self.start:size,:,:,:]
             tmp2 = self.train_imgs[0:self.end,:,:,:]
             batch_images = np.concatenate((tmp1,tmp2),axis=0)
             
-            tmp3 = self.label_imgs[self.start:size-1,:,:,:]
+            tmp3 = self.label_imgs[self.start:size,:,:,:]
             tmp4 = self.label_imgs[0:self.end,:,:,:]
             batch_labels = np.concatenate((tmp3,tmp4),axis=0)
             
@@ -62,14 +61,3 @@ class MyImages:
         self.end = (self.end + self.batch_size) % size
         
         return batch_images, batch_labels
-'''
-im_dir = '/Users/ful6ru04/Documents/TensorFlow workspace/Mycnn/SPINE_data'
-xs = tf.placeholder(tf.float32,[10,512,512,1])
-myImages = MyImages()
-myImages.build(im_dir,'png')
-ims = myImages.nextBatch(10)
-sess = tf.Session()
-sess.run(tf.initialize_all_variables())
-im = sess.run(xs,feed_dict={xs:ims})
-sess.close()
-'''

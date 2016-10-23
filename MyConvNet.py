@@ -4,15 +4,14 @@ from MyNet import weight_variable,bias_variable,conv_layer,pooling_layer,relu_la
 from MyNet import upsampling_layer,deconv_layer
 from Readim import MyImages
 
-import numpy as np
-from scipy import misc
-
+####################### INITIALIZATION START #######################
 batch_size=1
 h=500
 w=500
 c=1
 xs = tf.placeholder(tf.float32,[batch_size,h,w,c],name='xs')
 ys = tf.placeholder(tf.float32,[batch_size,h,w,c],name='ys')
+####################### INITIALIZATION END #######################
 
 ########## LAYER DEFINITION START ##########
 # layer 1
@@ -47,14 +46,11 @@ with tf.name_scope('loss'):
     prediction = tf.reshape(relu4,[-1,1])
 
     cross_entropy = tf.nn.sigmoid_cross_entropy_with_logits(prediction,ys_reshape)
-    
-    '''
-    cross_entropy = tf.reduce_mean(-tf.reduce_sum(ys_reshape*tf.log(prediction),
-                                              reduction_indices=[1]))
+    cross_entropy = tf.reduce_mean(cross_entropy)
     tf.scalar_summary('loss',cross_entropy)
-    '''
+
 with tf.name_scope('solver'):
-    train_step = tf.train.AdamOptimizer(1e-6).minimize(cross_entropy)
+    train_step = tf.train.AdamOptimizer(0.001).minimize(cross_entropy)
 ########## LAYER DEFINITION END ##########
 
 
@@ -65,23 +61,19 @@ myImages = MyImages()
 myImages.build(imdir,batch_size,'png')
 
 sess = tf.Session()
-#merged = tf.merge_all_summaries()
+merged = tf.merge_all_summaries()
 writer = tf.train.SummaryWriter("logs/", sess.graph)
 sess.run(tf.initialize_all_variables())
 
-for step in range(15):
+for step in range(500):
     batch_xs, batch_ys = myImages.nextBatch()
     
-    #print( sess.run(sum1,feed_dict={xs:batch_xs, ys:batch_ys}) )
-    
-    result=sess.run(train_step,feed_dict={xs:batch_xs, ys:batch_ys})
-    print(result)
-    if step % 1 == 0:
-        #print( str(step)+': '+str(compute_accuracy(mnist.test.images, mnist.test.labels)) )
-        print('step '+str(step))
-        #results = sess.run(merged,feed_dict={xs:batch_xs, ys:batch_ys})
-        #writer.add_summary(results,step)
+    _, loss_value = sess.run([train_step, cross_entropy],feed_dict={xs:batch_xs, ys:batch_ys})
+    print(loss_value)
+    print(_)
+
+    print('step '+str(step))
+    results = sess.run(merged,feed_dict={xs:batch_xs, ys:batch_ys})
+    writer.add_summary(results,step)
 
 sess.close()
-
-
