@@ -4,9 +4,10 @@ def weight_variable(shape,name='weight',stddev=0.1):
     with tf.name_scope(name):
         init = tf.truncated_normal(shape,stddev=stddev)
         weights = tf.Variable(init,name=name)
+        return weights
         #if len(weights.get_shape()) == [5,5,1,6]:
         #    tmp=tf.transpose(weights,perm=[3,0,1,2], name='tmp')
-        return weights
+        
 def bias_variable(shape,name='bias'):
     with tf.name_scope(name):
         init = tf.constant(0.1,shape=shape)
@@ -16,9 +17,9 @@ def bias_variable(shape,name='bias'):
 ######################### LAYERS #########################
 def conv_layer(bottom,Weights,bias=None,name='conv_layer'):
     with tf.name_scope(name):
-        conv_w = weight_variable(Weights,name=name+'/weight')# [cols,rows,channels,n]
+        # [cols,rows,channels,n]
+        conv_w = weight_variable( Weights, name=name+'/weight' )
         conv = tf.nn.conv2d(bottom,conv_w,strides=[1,1,1,1], padding='SAME')
-        #tf.histogram_summary(name+'/conv',conv)
         if bias==None:
             return conv
         else:
@@ -27,7 +28,8 @@ def conv_layer(bottom,Weights,bias=None,name='conv_layer'):
         
 def pooling_layer(bottom,name='pooling_layer'):
     with tf.name_scope(name):
-        return tf.nn.max_pool(bottom,ksize=[1,2,2,1],strides=[1,2,2,1],padding='VALID')
+        return tf.nn.max_pool(bottom,ksize=[1,2,2,1],
+                              strides=[1,2,2,1],padding='VALID')
     
 def relu_layer(bottom,name='relu_layer'):
     with tf.name_scope(name):    
@@ -45,10 +47,12 @@ def upsampling_layer(bottom,new_height=100,new_width=100,name='upsampling'):
     with tf.name_scope(name):
         return tf.image.resize_images(bottom, new_height, new_width)
         
-def deconv_layer(bottom,shape,Weights,bias=None,name='deconv_layer'):
+#def uppooling_layer()
+        
+def deconv_layer(bottom,Weights,shape,bias=None,name='deconv_layer'):
     with tf.name_scope(name):
-        deconv_w = weight_variable(Weights,name=name+'/weight')# [cols,rows,channels,n]
-        deconv = tf.nn.conv2d_transpose(bottom,deconv_w,shape,strides=[1,1,1,1])
+        deconv_w = weight_variable(Weights,name=name+'/weight')
+        deconv = tf.nn.conv2d_transpose(bottom,deconv_w,shape,[1,1,1,1],name=name)
         if bias==None:
             return deconv
         else:
